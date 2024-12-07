@@ -99,7 +99,7 @@
           const normalizedData = normalizeData(data);
 
           normalizedData.forEach((point) => {
-            const geometry = new THREE.SphereGeometry(0.02, 32, 32);
+            const geometry = new THREE.SphereGeometry(0.02, 16, 16);
             const material = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.7 });
             const sphere = new THREE.Mesh(geometry, material);
 
