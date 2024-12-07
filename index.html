@@ -45,9 +45,9 @@
 
           // 各軸のライン
           const axes = [
-            { start: [0, 0, 0], end: [1, 0, 0], label: "X", minLabel: min.x, maxLabel: max.x, offset: [0.1, 0, 0] },
-            { start: [0, 0, 0], end: [0, 1, 0], label: "Y", minLabel: min.y, maxLabel: max.y, offset: [0, 0.1, 0] },
-            { start: [0, 0, 0], end: [0, 0, 1], label: "Z", minLabel: min.z, maxLabel: max.z, offset: [0, 0, 0.1] }
+            { start: [-0.5, 0, -0.5], end: [0.5, 0, -0.5], label: 'X', minLabel: min.x, maxLabel: max.x, offset: [0.1, 0, 0] }, // X軸
+            { start: [-0.5, 0, -0.5], end: [-0.5, 1, -0.5], label: 'Y', minLabel: min.y, maxLabel: max.y, offset: [0, 0.1, 0] }, // Y軸
+            { start: [-0.5, 0, -0.5], end: [-0.5, 0, 0.5], label: 'Z', minLabel: min.z, maxLabel: max.z, offset: [0, 0, 0.1] }  // Z軸
           ];
 
           const loader = new FontLoader();
@@ -100,10 +100,10 @@
 
           normalizedData.forEach((point) => {
             const geometry = new THREE.SphereGeometry(0.02, 16, 16);
-            const material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+            const material = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.7 });
             const sphere = new THREE.Mesh(geometry, material);
 
-            sphere.position.set(point.x, point.y, point.z);
+            sphere.position.set(point.x-0.5, point.y, point.z-0.5);
             scene.add(sphere);
           });
         } catch (error) {
