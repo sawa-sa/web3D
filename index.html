@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>CSVファイルアップロード</title>
+  </head>
+  <body>
+    <h1>CSVファイルのアップロード</h1>
+
+    <!-- CSVファイル選択 -->
+    <input type="file" id="csvFileInput" accept=".csv" />
+
+    <!-- チェックボックスでフラグを作成 -->
+    <div style="margin-top: 10px;">
+      <input type="checkbox" id="flag" />
+      <label for="flag">正規化して0-1の値として扱います。</label>
+      <!-- メッセージを切り替える要素 -->
+      <p id="flagStatus">1をデフォルトの大きさとし、0より大きい任意の値を入れてください</p>
+    </div>
+
+    <!-- アップロードボタン -->
+    <button id="uploadBtn" style="margin-top: 10px;">アップロード</button>
+
+    <script>
+      // 要素の取得
+      const fileInput = document.getElementById('csvFileInput');
+      const checkBox = document.getElementById('flag');
+      const flagStatus = document.getElementById('flagStatus');
+      const uploadBtn = document.getElementById('uploadBtn');
+
+      // ▼ 1) チェックボックスが切り替わったときにメッセージを変える
+      checkBox.addEventListener('change', () => {
+        if (checkBox.checked) {
+          flagStatus.textContent = "正規化が有効です (0〜1の範囲にスケーリングします)。";
+        } else {
+          flagStatus.textContent = "正規化しません (1を基準の大きさとし、0より大きい任意の値を受け付けます)。";
+        }
+      });
+
+      // ▼ 2) アップロードボタン押下時の処理
+      uploadBtn.addEventListener('click', () => {
+        if (!fileInput.files[0]) {
+          alert('CSVファイルを選択してください。');
+          return;
+        }
+
+        // チェックボックスの状態を保存 (true/false)
+        sessionStorage.setItem('flag', checkBox.checked ? '1' : '0');
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+          const csvText = e.target.result;
+          // CSVの中身を保存
+          sessionStorage.setItem('uploadedCSVData', csvText);
+
+          // 次のページへ
+          window.location.href = 'scatterPlot.html';
+        };
+
+        reader.readAsText(file);
+      });
+
+      // ▼ 3) ページ読み込み時の初期メッセージ (任意)
+      // もし最初からチェックされているなら以下のように「正規化有効」の文言に変えたい場合など
+      (function initMessage() {
+        if (checkBox.checked) {
+          flagStatus.textContent = "正規化が有効です (0〜1の範囲にスケーリングします)。";
+        } else {
+          flagStatus.textContent = "正規化しません (1を基準の大きさとし、0より大きい任意の値を受け付けます)。";
+        }
+      })();
+    </script>
+  </body>
+</html>
