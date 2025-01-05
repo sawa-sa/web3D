@@ -2,70 +2,174 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>CSVファイルアップロード</title>
+    <title>CSVファイル or データセット選択</title>
+    <style>
+      fieldset {
+        margin: 1em 0;
+        padding: 1em;
+        border: 1px solid #ccc;
+      }
+      .disabled {
+        opacity: 0.5;
+        pointer-events: none; /* クリックや変更を受け付けない */
+      }
+    </style>
   </head>
   <body>
-    <h1>CSVファイルのアップロード</h1>
+    <h1>データの選択</h1>
 
-    <!-- CSVファイル選択 -->
-    <input type="file" id="csvFileInput" accept=".csv" />
-
-    <!-- チェックボックスでフラグを作成 -->
-    <div style="margin-top: 10px;">
-      <input type="checkbox" id="flag" />
-      <label for="flag">正規化して0-1の値として扱います。</label>
-      <!-- メッセージを切り替える要素 -->
-      <p id="flagStatus">1をデフォルトの大きさとし、0より大きい任意の値を入れてください</p>
+    <!-- A) どちらを使うかを選ぶラジオボタン -->
+    <div>
+      <label>
+        <input type="radio" name="mode" value="dataset" />
+        データセットを使用
+      </label><br />
+      <label>
+        <input type="radio" name="mode" value="custom" checked />
+        ファイルをアップロード
+      </label>
     </div>
 
-    <!-- アップロードボタン -->
-    <button id="uploadBtn" style="margin-top: 10px;">アップロード</button>
+    <!-- B) データセット選択欄 -->
+    <fieldset id="datasetSection" class="disabled">
+      <legend>データセット</legend>
+      <label>
+        <input type="radio" name="dataset" value="dataset1" checked />
+        サンプルデータセット1（3変数）
+      </label><br/>
+      <label>
+        <input type="radio" name="dataset" value="dataset2" />
+        サンプルデータセット2（4変数）
+      </label><br/>
+      <label>
+        <input type="radio" name="dataset" value="dataset3" />
+        サンプルデータセット3（5変数）
+      </label>
+      <p>（データセット利用時は正規化やファイル選択はできません）</p>
+    </fieldset>
+
+    <!-- C) ファイルアップロード + 正規化フラグ -->
+    <fieldset id="customSection">
+      <legend>カスタムファイル & フラグ</legend>
+      <div style="margin-top: 10px;">
+        <input type="file" id="csvFileInput" accept=".csv" />
+      </div>
+
+      <div style="margin-top: 10px;">
+        <input type="checkbox" id="flag" />
+        <label for="flag">正規化して0-1の値として扱う</label>
+        <p id="flagStatus">1をデフォルトとし、0より大きい任意の値を指定できます。</p>
+      </div>
+    </fieldset>
+
+    <!-- 決定ボタン -->
+    <button id="submitBtn" style="margin-top: 10px;">決定</button>
 
     <script>
-      // 要素の取得
-      const fileInput = document.getElementById('csvFileInput');
-      const checkBox = document.getElementById('flag');
-      const flagStatus = document.getElementById('flagStatus');
-      const uploadBtn = document.getElementById('uploadBtn');
+      // 要素取得
+      const modeRadios = document.getElementsByName('mode');
+      const datasetSection = document.getElementById('datasetSection');
+      const customSection = document.getElementById('customSection');
 
-      // ▼ 1) チェックボックスが切り替わったときにメッセージを変える
-      checkBox.addEventListener('change', () => {
-        if (checkBox.checked) {
+      const datasetRadios = document.getElementsByName('dataset');
+      const fileInput = document.getElementById('csvFileInput');
+      const flagCheck = document.getElementById('flag');
+      const flagStatus = document.getElementById('flagStatus');
+
+      const submitBtn = document.getElementById('submitBtn');
+
+      // ラジオボタンの状態変更時に表示/非表示を切り替える
+      modeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          if (e.target.value === 'dataset') {
+            // データセット利用 → datasetSection を有効、customSection を無効
+            datasetSection.classList.remove('disabled');
+            customSection.classList.add('disabled');
+          } else {
+            // カスタムファイル → customSection を有効、datasetSection を無効
+            datasetSection.classList.add('disabled');
+            customSection.classList.remove('disabled');
+          }
+        });
+      });
+
+      // フラグのチェックボックス変更時のメッセージ切り替え
+      flagCheck.addEventListener('change', () => {
+        if (flagCheck.checked) {
           flagStatus.textContent = "正規化が有効です (0〜1の範囲にスケーリングします)。";
         } else {
           flagStatus.textContent = "正規化しません (1を基準の大きさとし、0より大きい任意の値を受け付けます)。";
         }
       });
 
-      // ▼ 2) アップロードボタン押下時の処理
-      uploadBtn.addEventListener('click', () => {
-        if (!fileInput.files[0]) {
-          alert('CSVファイルを選択してください。');
-          return;
-        }
+      // ファイル or データセットを決定
+      submitBtn.addEventListener('click', async () => {
+        let modeValue;
+        modeRadios.forEach(r => {
+          if (r.checked) {
+            modeValue = r.value; // dataset or custom
+          }
+        });
 
-        // チェックボックスの状態を保存 (true/false)
-        sessionStorage.setItem('flag', checkBox.checked ? '1' : '0');
+        // sessionStorage に保存して scatterPlot.html などへ移動
+        if (modeValue === 'dataset') {
+          // データセットを使用
+          // 1) どのデータセットか取得
+          let selectedDataset = 'dataset1'; // デフォルト
+          datasetRadios.forEach(r => {
+            if (r.checked) {
+              selectedDataset = r.value;
+            }
+          });
 
-        const file = fileInput.files[0];
-        const reader = new FileReader();
+          // 2) データセット名を保存 (CSV自体は scatterPlot.html 側で fetch するか、ここでfetchして中身を保存するなど方法は色々)
+          sessionStorage.setItem('chosenDataset', selectedDataset);
 
-        reader.onload = (e) => {
-          const csvText = e.target.result;
-          // CSVの中身を保存
-          sessionStorage.setItem('uploadedCSVData', csvText);
+          // 3) フラグは使わない → 1固定 or "disabled" など。ここでは 1 固定にする
+          sessionStorage.setItem('flag', '1');
+
+          // 4) CSVは保存しない or 何かしら固定の文字列を保存
+          sessionStorage.removeItem('uploadedCSVData'); 
+          // もしくはsessionStorage.setItem('uploadedCSVData', '')
 
           // 次のページへ
           window.location.href = 'scatterPlot.html';
-        };
 
-        reader.readAsText(file);
+        } else {
+          // カスタムファイルを使う
+          const file = fileInput.files[0];
+          if (!file) {
+            alert("CSVファイルを選択してください。");
+            return;
+          }
+          // フラグを保存
+          sessionStorage.setItem('flag', flagCheck.checked ? '1' : '0');
+
+          // ファイル読み込み
+          try {
+            const csvText = await readCsvFile(file);
+            sessionStorage.setItem('uploadedCSVData', csvText);
+            sessionStorage.setItem('chosenDataset', 'custom');
+            window.location.href = 'scatterPlot.html';
+          } catch (error) {
+            alert("ファイル読み込みに失敗しました。");
+          }
+        }
       });
 
-      // ▼ 3) ページ読み込み時の初期メッセージ (任意)
-      // もし最初からチェックされているなら以下のように「正規化有効」の文言に変えたい場合など
+      // FileReader で CSV を読み込む
+      function readCsvFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = err => reject(err);
+          reader.readAsText(file);
+        });
+      }
+
+      // ページ読み込み時の初期メッセージ
       (function initMessage() {
-        if (checkBox.checked) {
+        if (flagCheck.checked) {
           flagStatus.textContent = "正規化が有効です (0〜1の範囲にスケーリングします)。";
         } else {
           flagStatus.textContent = "正規化しません (1を基準の大きさとし、0より大きい任意の値を受け付けます)。";

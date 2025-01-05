@@ -1,10 +1,8 @@
-// CSVManager.js
 import * as THREE from "three";
 
 // CSV文字列をパースしてデータ配列を返す
 function parseCSVData(text) {
-  // 1行目（ヘッダ）を無視するため slice(1)
-  const rows = text.split("\n").slice(1);
+  const rows = text.split("\n").slice(1); // ヘッダー除去
 
   const data = rows.map((row) => {
     const cols = row.split(",");
@@ -33,29 +31,38 @@ function parseCSVData(text) {
   return data;
 }
 
+async function loadCSVData(url) {
+  const response = await fetch(url);
+  const text = await response.text();
+  return parseCSVData(text); // パース処理を共通化
+}
+
 // データを正規化する
 function normalizeData(data) {
   const minMax = calculateMinMax(data);
   const flag = sessionStorage.getItem('flag'); // フラグを取得
-  return data.map((point) => ({
-    x: (minMax.max.x - minMax.min.x === 0)
-      ? 0.5
-      : (point.x - minMax.min.x) / (minMax.max.x - minMax.min.x),
-    y: (minMax.max.y - minMax.min.y === 0)
-      ? 0.5
-      : (point.y - minMax.min.y) / (minMax.max.y - minMax.min.y),
-    z: (minMax.max.z - minMax.min.z === 0)
-      ? 0.5
-      : (point.z - minMax.min.z) / (minMax.max.z - minMax.min.z),
+  const chosenDataset = sessionStorage.getItem('chosenDataset'); // データセット取得
+  return data.map((point) => {
+    return {
+      x: (minMax.max.x - minMax.min.x === 0)
+        ? 0.5
+        : (point.x - minMax.min.x) / (minMax.max.x - minMax.min.x),
+      y: (minMax.max.y - minMax.min.y === 0)
+        ? 0.5
+        : (point.y - minMax.min.y) / (minMax.max.y - minMax.min.y),
+      z: (minMax.max.z - minMax.min.z === 0)
+        ? 0.5
+        : (point.z - minMax.min.z) / (minMax.max.z - minMax.min.z),
       size: (point.size !== undefined)
-      ? (flag === '1')
-        ? (minMax.max.size - minMax.min.size === 0) 
-          ? 0.5 
-          : (point.size - minMax.min.size) / (minMax.max.size - minMax.min.size) 
-        : point.size
-      : undefined,
-    color: point.color
-  }));
+        ? (flag === '1')
+          ? (minMax.max.size - minMax.min.size === 0) 
+            ? 0.5 
+            : (point.size - minMax.min.size) / (minMax.max.size - minMax.min.size) 
+          : point.size
+        : undefined,
+      color: point.color
+    };
+  });
 }
 
 // データの x, y, z, size の最小値・最大値を計算
@@ -82,5 +89,6 @@ function calculateMinMax(data) {
 export {
   parseCSVData,
   normalizeData,
-  calculateMinMax
+  calculateMinMax,
+  loadCSVData
 };
