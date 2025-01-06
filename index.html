@@ -35,15 +35,23 @@
       <legend>データセット</legend>
       <label>
         <input type="radio" name="dataset" value="dataset1" checked />
-        サンプルデータセット1（3変数）
+        iris（3変数）
       </label><br/>
       <label>
         <input type="radio" name="dataset" value="dataset2" />
-        サンプルデータセット2（4変数）
+        iris（4変数）
       </label><br/>
       <label>
         <input type="radio" name="dataset" value="dataset3" />
-        サンプルデータセット3（5変数）
+        iris（5変数）
+      </label><br/>
+      <label>
+        <input type="radio" name="dataset" value="dataset4" />
+        世界のデータ（5変数）
+      </label><br/>
+      <label>
+        <input type="radio" name="dataset" value="dataset5" />
+        ランダムデータ（4変数）
       </label>
       <p>（データセット利用時は正規化やファイル選択はできません）</p>
     </fieldset>
@@ -82,18 +90,15 @@
       modeRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
           if (e.target.value === 'dataset') {
-            // データセット利用 → datasetSection を有効、customSection を無効
             datasetSection.classList.remove('disabled');
             customSection.classList.add('disabled');
           } else {
-            // カスタムファイル → customSection を有効、datasetSection を無効
             datasetSection.classList.add('disabled');
             customSection.classList.remove('disabled');
           }
         });
       });
 
-      // フラグのチェックボックス変更時のメッセージ切り替え
       flagCheck.addEventListener('change', () => {
         if (flagCheck.checked) {
           flagStatus.textContent = "正規化が有効です (0〜1の範囲にスケーリングします)。";
@@ -102,50 +107,35 @@
         }
       });
 
-      // ファイル or データセットを決定
       submitBtn.addEventListener('click', async () => {
         let modeValue;
         modeRadios.forEach(r => {
           if (r.checked) {
-            modeValue = r.value; // dataset or custom
+            modeValue = r.value;
           }
         });
 
-        // sessionStorage に保存して scatterPlot.html などへ移動
         if (modeValue === 'dataset') {
-          // データセットを使用
-          // 1) どのデータセットか取得
-          let selectedDataset = 'dataset1'; // デフォルト
+          let selectedDataset = 'dataset1';
           datasetRadios.forEach(r => {
             if (r.checked) {
               selectedDataset = r.value;
             }
           });
 
-          // 2) データセット名を保存 (CSV自体は scatterPlot.html 側で fetch するか、ここでfetchして中身を保存するなど方法は色々)
           sessionStorage.setItem('chosenDataset', selectedDataset);
-
-          // 3) フラグは使わない → 1固定 or "disabled" など。ここでは 1 固定にする
           sessionStorage.setItem('flag', '1');
-
-          // 4) CSVは保存しない or 何かしら固定の文字列を保存
           sessionStorage.removeItem('uploadedCSVData'); 
-          // もしくはsessionStorage.setItem('uploadedCSVData', '')
-
-          // 次のページへ
           window.location.href = 'scatterPlot.html';
 
         } else {
-          // カスタムファイルを使う
           const file = fileInput.files[0];
           if (!file) {
             alert("CSVファイルを選択してください。");
             return;
           }
-          // フラグを保存
           sessionStorage.setItem('flag', flagCheck.checked ? '1' : '0');
 
-          // ファイル読み込み
           try {
             const csvText = await readCsvFile(file);
             sessionStorage.setItem('uploadedCSVData', csvText);
@@ -157,7 +147,6 @@
         }
       });
 
-      // FileReader で CSV を読み込む
       function readCsvFile(file) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -167,7 +156,6 @@
         });
       }
 
-      // ページ読み込み時の初期メッセージ
       (function initMessage() {
         if (flagCheck.checked) {
           flagStatus.textContent = "正規化が有効です (0〜1の範囲にスケーリングします)。";
